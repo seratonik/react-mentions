@@ -222,8 +222,8 @@ const MentionsInput = React.createClass({
   // Returns the text to set as the value of the textarea with all markups removed
   getPlainText: function() {
     return utils.getPlainText(
-      this.props.value || "", 
-      this.props.markup, 
+      this.props.value || "",
+      this.props.markup,
       this.props.displayTransform
     );
   },
@@ -281,6 +281,7 @@ const MentionsInput = React.createClass({
       selectionStart: selectionStart,
       selectionEnd: selectionEnd,
       setSelectionAfterMentionChange: setSelectionAfterMentionChange,
+      focusIndex: 0
     });
 
     var mentions = utils.getMentions(newValue, this.props.markup);
