@@ -33,7 +33,7 @@ class SuggestionsOverlay extends Component {
     const { top: topContainer } = suggestions.getBoundingClientRect();
     top = top - topContainer + scrollTop;
     bottom = bottom - topContainer + scrollTop;
-    
+
     if(top < scrollTop) {
       suggestions.scrollTop = top
     } else if(bottom > suggestions.offsetHeight) {
@@ -128,7 +128,7 @@ export default Radium(SuggestionsOverlay);
 const substyle = defaultStyle({
   style: {
     position: "absolute",
-    zIndex: 1,
+    zIndex: 10,
     backgroundColor: "white",
     marginTop: 14,
     minWidth: 100,
