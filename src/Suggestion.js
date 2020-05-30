@@ -1,12 +1,12 @@
-import React, { Component, PropTypes } from 'react';
-import Radium from './OptionalRadium';
-import omit from 'lodash/omit';
-import keys from 'lodash/keys';
+import React, { Component } from "react";
+import PropTypes from "prop-types";
+import Radium from "./OptionalRadium";
+import omit from "lodash/omit";
+import keys from "lodash/keys";
 
 import defaultStyle from "substyle";
 
 class Suggestion extends Component {
-
   static propTypes = {
     id: PropTypes.string.isRequired,
     query: PropTypes.string.isRequired,
@@ -16,7 +16,7 @@ class Suggestion extends Component {
       PropTypes.string,
       PropTypes.shape({
         id: PropTypes.string.isRequired,
-        display: PropTypes.string
+        display: PropTypes.string,
       }),
     ]).isRequired,
     descriptor: PropTypes.object.isRequired,
@@ -29,10 +29,10 @@ class Suggestion extends Component {
 
     return (
       <li
-        { ...rest }
-        { ...substyle(this.props, { "&focused": this.props.focused}) }>
-
-        { this.renderContent() }
+        {...rest}
+        {...substyle(this.props, { "&focused": this.props.focused })}
+      >
+        {this.renderContent()}
       </li>
     );
   }
@@ -43,8 +43,13 @@ class Suggestion extends Component {
     let display = this.getDisplay();
     let highlightedDisplay = this.renderHighlightedDisplay(display, query);
 
-    if(descriptor.props.renderSuggestion) {
-      return descriptor.props.renderSuggestion(suggestion, query, highlightedDisplay, index);
+    if (descriptor.props.renderSuggestion) {
+      return descriptor.props.renderSuggestion(
+        suggestion,
+        query,
+        highlightedDisplay,
+        index
+      );
     }
 
     return highlightedDisplay;
@@ -53,14 +58,14 @@ class Suggestion extends Component {
   getDisplay() {
     let { suggestion } = this.props;
 
-    if(suggestion instanceof String) {
+    if (suggestion instanceof String) {
       return suggestion;
     }
 
     let { id, display } = suggestion;
 
-    if(!id || !display) {
-      return id;
+    if (!id || !display) {
+      return id;
     }
 
     return display;
@@ -71,27 +76,26 @@ class Suggestion extends Component {
 
     let i = display.toLowerCase().indexOf(query.toLowerCase());
 
-    if(i === -1) {
-      return <span { ...substyle(this.props, "display") }>{ display }</span>;
+    if (i === -1) {
+      return <span {...substyle(this.props, "display")}>{display}</span>;
     }
 
     return (
-      <span { ...substyle(this.props, "display") }>
-        { display.substring(0, i) }
-        <b { ...substyle(this.props, "highlight") }>
-          { display.substring(i, i+query.length) }
+      <span {...substyle(this.props, "display")}>
+        {display.substring(0, i)}
+        <b {...substyle(this.props, "highlight")}>
+          {display.substring(i, i + query.length)}
         </b>
-        { display.substring(i+query.length) }
+        {display.substring(i + query.length)}
       </span>
     );
   }
-
 }
 
 export default Radium(Suggestion);
 
 const substyle = defaultStyle({
   style: {
-    cursor: "pointer"
-  }
-})
+    cursor: "pointer",
+  },
+});

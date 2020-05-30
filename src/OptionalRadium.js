@@ -1,14 +1,5 @@
-import identity from 'lodash/identity'
+import identity from "lodash/identity";
 
-let Radium
-try {
-  Radium = require('radium')
-} catch(err) { 
-  if (err.code === "MODULE_NOT_FOUND") {
-    Radium = identity
-  } else {
-    throw err;
-  }
-}
+let Radium = identity;
 
-export default Radium
+export default Radium;

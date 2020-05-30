@@ -1,14 +1,15 @@
-import React, { Component, PropTypes, Children } from 'react';
-import Radium from './OptionalRadium';
-import defaultStyle from 'substyle';
+import React, { Component, Children } from "react";
+import PropTypes from "prop-types";
+import Radium from "./OptionalRadium";
+import defaultStyle from "substyle";
 
 import isEqual from "lodash/isEqual";
 
-import utils from './utils';
-import Mention from './Mention';
+import utils from "./utils";
+import Mention from "./Mention";
 
 const _generateComponentKey = (usedKeys, id) => {
-  if(!usedKeys.hasOwnProperty(id)) {
+  if (!usedKeys.hasOwnProperty(id)) {
     usedKeys[id] = 0;
   } else {
     usedKeys[id]++;
@@ -17,11 +18,10 @@ const _generateComponentKey = (usedKeys, id) => {
 };
 
 class Highlighter extends Component {
-
   static propTypes = {
     selection: PropTypes.shape({
       start: PropTypes.number,
-      end: PropTypes.number
+      end: PropTypes.number,
     }).isRequired,
 
     markup: PropTypes.string.isRequired,
@@ -29,12 +29,12 @@ class Highlighter extends Component {
 
     displayTransform: PropTypes.func.isRequired,
     onCaretPositionChange: PropTypes.func.isRequired,
-    inputStyle: PropTypes.object
+    inputStyle: PropTypes.object,
   };
 
   static defaultProps = {
     value: "",
-    inputStyle: {}
+    inputStyle: {},
   };
 
   constructor() {
@@ -48,29 +48,29 @@ class Highlighter extends Component {
   }
 
   componentDidUpdate() {
-    this.notifyCaretPosition()
+    this.notifyCaretPosition();
   }
 
   notifyCaretPosition() {
     let { caret } = this.refs;
 
-    if(!caret) {
+    if (!caret) {
       return;
     }
 
     let position = {
       left: caret.offsetLeft,
-      top: caret.offsetTop
+      top: caret.offsetTop,
     };
 
     let { lastPosition } = this.state;
 
-    if(isEqual(lastPosition, position)) {
+    if (isEqual(lastPosition, position)) {
       return;
     }
 
     this.setState({
-      lastPosition: position
+      lastPosition: position,
     });
 
     this.props.onCaretPositionChange(position);
@@ -81,8 +81,14 @@ class Highlighter extends Component {
 
     // If there's a caret (i.e. no range selection), map the caret position into the marked up value
     var caretPositionInMarkup;
-    if(selection.start === selection.end) {
-      caretPositionInMarkup = utils.mapPlainTextIndex(value, markup, selection.start, 'START', displayTransform);
+    if (selection.start === selection.end) {
+      caretPositionInMarkup = utils.mapPlainTextIndex(
+        value,
+        markup,
+        selection.start,
+        "START",
+        displayTransform
+      );
     }
 
     var resultComponents = [];
@@ -95,55 +101,75 @@ class Highlighter extends Component {
 
     var textIteratee = (substr, index, indexInPlainText) => {
       // check whether the caret element has to be inserted inside the current plain substring
-      if(utils.isNumber(caretPositionInMarkup) && caretPositionInMarkup >= index && caretPositionInMarkup <= index + substr.length) {
+      if (
+        utils.isNumber(caretPositionInMarkup) &&
+        caretPositionInMarkup >= index &&
+        caretPositionInMarkup <= index + substr.length
+      ) {
         // if yes, split substr at the caret position and insert the caret component
         var splitIndex = caretPositionInMarkup - index;
         components.push(
-          this.renderSubstring(substr.substring(0, splitIndex), substringComponentKey)
+          this.renderSubstring(
+            substr.substring(0, splitIndex),
+            substringComponentKey
+          )
         );
 
         // add all following substrings and mention components as children of the caret component
-        components = [ this.renderSubstring(substr.substring(splitIndex), substringComponentKey) ];
+        components = [
+          this.renderSubstring(
+            substr.substring(splitIndex),
+            substringComponentKey
+          ),
+        ];
       } else {
         // otherwise just push the plain text substring
-        components.push(
-          this.renderSubstring(substr, substringComponentKey)
-        );
+        components.push(this.renderSubstring(substr, substringComponentKey));
       }
 
       substringComponentKey++;
     };
 
-    var mentionIteratee = function(markup, index, indexInPlainText, id, display, type, lastMentionEndIndex) {
+    var mentionIteratee = function (
+      markup,
+      index,
+      indexInPlainText,
+      id,
+      display,
+      type,
+      lastMentionEndIndex
+    ) {
       // generate a component key based on the id
       var key = _generateComponentKey(componentKeys, id);
-      components.push(
-        this.getMentionComponentForMatch(id, display, type, key)
-      );
+      components.push(this.getMentionComponentForMatch(id, display, type, key));
     }.bind(this);
-    utils.iterateMentionsMarkup(value, markup, textIteratee, mentionIteratee, displayTransform);
+    utils.iterateMentionsMarkup(
+      value,
+      markup,
+      textIteratee,
+      mentionIteratee,
+      displayTransform
+    );
 
     // append a span containing a space, to ensure the last text line has the correct height
     components.push(" ");
 
-    if(components !== resultComponents) {
+    if (components !== resultComponents) {
       // if a caret component is to be rendered, add all components that followed as its children
-      resultComponents.push(
-        this.renderHighlighterCaret(components)
-      );
+      resultComponents.push(this.renderHighlighterCaret(components));
     }
 
     let { style, className } = substyle(this.props, getModifiers(this.props));
 
     return (
       <div
-        className={ className }
+        className={className}
         style={{
           ...inputStyle,
-          ...style
-        }}>
-
-        { resultComponents }
+          ...style,
+        }}
+      >
+        {resultComponents}
       </div>
     );
   }
@@ -151,8 +177,8 @@ class Highlighter extends Component {
   renderSubstring(string, key) {
     // set substring span to hidden, so that Emojis are not shown double in Mobile Safari
     return (
-      <span { ...substyle(this.props, "substring") } key={key}>
-        { string }
+      <span {...substyle(this.props, "substring")} key={key}>
+        {string}
       </span>
     );
   }
@@ -162,8 +188,8 @@ class Highlighter extends Component {
     var childrenCount = Children.count(this.props.children);
     var props = { id, display, key };
 
-    if(childrenCount > 1) {
-      if(!type) {
+    if (childrenCount > 1) {
+      if (!type) {
         throw new Error(
           "Since multiple Mention components have been passed as children, the markup has to define the __type__ placeholder"
         );
@@ -172,11 +198,11 @@ class Highlighter extends Component {
       // detect the Mention child to be cloned
       var foundChild = null;
       Children.forEach(this.props.children, (child) => {
-        if(!child) {
+        if (!child) {
           return;
         }
 
-        if(child.props.type === type) {
+        if (child.props.type === type) {
           foundChild = child;
         }
       });
@@ -185,9 +211,11 @@ class Highlighter extends Component {
       return React.cloneElement(foundChild, props);
     }
 
-    if(childrenCount === 1) {
+    if (childrenCount === 1) {
       // clone single Mention child
-      var child = this.props.children.length ? this.props.children[0] : Children.only(this.props.children);
+      var child = this.props.children.length
+        ? this.props.children[0]
+        : Children.only(this.props.children);
       return React.cloneElement(child, props);
     }
 
@@ -198,8 +226,8 @@ class Highlighter extends Component {
   // Renders an component to be inserted in the highlighter at the current caret position
   renderHighlighterCaret(children) {
     return (
-      <span { ...substyle(this.props, "caret") } ref="caret" key="caret">
-        { children }
+      <span {...substyle(this.props, "caret")} ref="caret" key="caret">
+        {children}
       </span>
     );
   }
@@ -208,29 +236,32 @@ class Highlighter extends Component {
 export default Radium(Highlighter);
 
 const getModifiers = (props, ...modifiers) => ({
-  ...modifiers.reduce((result, modifier) => ({ ...result, [modifier]: true }), {}),
+  ...modifiers.reduce(
+    (result, modifier) => ({ ...result, [modifier]: true }),
+    {}
+  ),
 
-  '&singleLine': props.singleLine,
+  "&singleLine": props.singleLine,
 });
 
 const substyle = defaultStyle({
   style: {
-    position: 'relative',
-    width: 'inherit',
-    color: 'transparent',
+    position: "relative",
+    width: "inherit",
+    color: "transparent",
 
-    overflow: 'hidden',
+    overflow: "hidden",
 
-    whiteSpace: 'pre-wrap',
-    wordWrap: 'break-word',
+    whiteSpace: "pre-wrap",
+    wordWrap: "break-word",
 
-    '&singleLine': {
-      whiteSpace: 'pre',
-      wordWrap: null
+    "&singleLine": {
+      whiteSpace: "pre",
+      wordWrap: null,
     },
 
     substring: {
-      visibility: 'hidden'
-    }
-  }
+      visibility: "hidden",
+    },
+  },
 });

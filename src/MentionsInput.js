@@ -1,38 +1,45 @@
-import React, { PropTypes } from 'react';
-import ReactDOM from 'react-dom';
-import Radium from './OptionalRadium';
+import React from "react";
+import ReactDOM from "react-dom";
+import PropTypes from "prop-types";
+import Radium from "./OptionalRadium";
 
-import keys from 'lodash/keys';
-import values from 'lodash/values';
-import omit from 'lodash/omit';
-import isEqual from 'lodash/isEqual';
+import keys from "lodash/keys";
+import values from "lodash/values";
+import omit from "lodash/omit";
+import isEqual from "lodash/isEqual";
 
-import defaultStyle from 'substyle';
+import defaultStyle from "substyle";
 
-import utils from './utils';
-import SuggestionsOverlay from './SuggestionsOverlay';
-import Highlighter from './Highlighter';
+import utils from "./utils";
+import SuggestionsOverlay from "./SuggestionsOverlay";
+import Highlighter from "./Highlighter";
 
-var _getTriggerRegex = function(trigger) {
-  if(trigger instanceof RegExp) {
+var _getTriggerRegex = function (trigger) {
+  if (trigger instanceof RegExp) {
     return trigger;
   } else {
     var escapedTriggerChar = utils.escapeRegex(trigger);
 
     // first capture group is the part to be replaced on completion
     // second capture group is for extracting the search query
-    return new RegExp("(?:^|\\s)(" + escapedTriggerChar + "([^\\s" + escapedTriggerChar + "]*))$");
+    return new RegExp(
+      "(?:^|\\s)(" +
+        escapedTriggerChar +
+        "([^\\s" +
+        escapedTriggerChar +
+        "]*))$"
+    );
   }
 };
 
-var _getDataProvider = function(data) {
-  if(data instanceof Array) {
+var _getDataProvider = function (data) {
+  if (data instanceof Array) {
     // if data is an array, create a function to query that
-    return function(query, callback) {
+    return function (query, callback) {
       var results = [];
-      for(var i=0, l=data.length; i < l; ++i) {
-        var display = data[i].display || data[i].id;
-        if(display.toLowerCase().indexOf(query.toLowerCase()) >= 0) {
+      for (var i = 0, l = data.length; i < l; ++i) {
+        var display = data[i].display || data[i].id;
+        if (display.toLowerCase().indexOf(query.toLowerCase()) >= 0) {
           results.push(data[i]);
         }
       }
@@ -44,16 +51,14 @@ var _getDataProvider = function(data) {
   }
 };
 
-var KEY = { TAB : 9, RETURN : 13, ESC : 27, UP : 38, DOWN : 40 };
+var KEY = { TAB: 9, RETURN: 13, ESC: 27, UP: 38, DOWN: 40 };
 
 var isComposing = false;
 
 const MentionsInput = React.createClass({
-
-  displayName: 'MentionsInput',
+  displayName: "MentionsInput",
 
   propTypes: {
-
     /**
      * If set to `true` a regular text input element will be rendered
      * instead of a textarea
@@ -72,20 +77,20 @@ const MentionsInput = React.createClass({
     children: PropTypes.oneOfType([
       PropTypes.element,
       PropTypes.arrayOf(PropTypes.element),
-    ]).isRequired
+    ]).isRequired,
   },
 
   getDefaultProps: function () {
     return {
       markup: "@[__display__](__id__)",
       singleLine: false,
-      displayTransform: function(id, display, type) {
+      displayTransform: function (id, display, type) {
         return display;
       },
       onKeyDown: () => null,
       onSelect: () => null,
       onBlur: () => null,
-      style: {}
+      style: {},
     };
   },
 
@@ -99,20 +104,20 @@ const MentionsInput = React.createClass({
       suggestions: {},
 
       caretPosition: null,
-      suggestionsPosition: null
+      suggestionsPosition: null,
     };
   },
 
-  render: function() {
+  render: function () {
     return (
       <div ref="container" {...substyle(this.props, getModifiers(this.props))}>
-        { this.renderControl() }
-        { this.renderSuggestionsOverlay() }
+        {this.renderControl()}
+        {this.renderSuggestionsOverlay()}
       </div>
     );
   },
 
-  getInputProps: function(isTextarea) {
+  getInputProps: function (isTextarea) {
     let { readOnly, disabled } = this.props;
 
     // pass all props that we don't use through to the input control
@@ -125,102 +130,103 @@ const MentionsInput = React.createClass({
 
       value: this.getPlainText(),
 
-      ...(!readOnly && !disabled && {
-        onChange: this.handleChange,
-        onSelect: this.handleSelect,
-        onKeyDown: this.handleKeyDown,
-        onBlur: this.handleBlur,
-        onCompositionStart: this.handleCompositionStart,
-        onCompositionEnd: this.handleCompositionEnd,
-      })
+      ...(!readOnly &&
+        !disabled && {
+          onChange: this.handleChange,
+          onSelect: this.handleSelect,
+          onKeyDown: this.handleKeyDown,
+          onBlur: this.handleBlur,
+          onCompositionStart: this.handleCompositionStart,
+          onCompositionEnd: this.handleCompositionEnd,
+        }),
     };
   },
 
-  renderControl: function() {
+  renderControl: function () {
     let { singleLine } = this.props;
     let inputProps = this.getInputProps(!singleLine);
 
     return (
-      <div { ...substyle(this.props, getModifiers(this.props, "control")) }>
-        { this.renderHighlighter(inputProps.style) }
-        { singleLine ? this.renderInput(inputProps) : this.renderTextarea(inputProps) }
+      <div {...substyle(this.props, getModifiers(this.props, "control"))}>
+        {this.renderHighlighter(inputProps.style)}
+        {singleLine
+          ? this.renderInput(inputProps)
+          : this.renderTextarea(inputProps)}
       </div>
     );
   },
 
-  renderInput: function(props) {
-
-    return (
-      <input
-        type="text"
-        ref="input"
-        { ...props } />
-    );
+  renderInput: function (props) {
+    return <input type="text" ref="input" {...props} />;
   },
 
-  renderTextarea: function(props) {
-    return (
-      <textarea
-        ref="input"
-        { ...props } />
-    );
+  renderTextarea: function (props) {
+    return <textarea ref="input" {...props} />;
   },
 
-  renderSuggestionsOverlay: function() {
-    if(!utils.isNumber(this.state.selectionStart)) {
+  renderSuggestionsOverlay: function () {
+    if (!utils.isNumber(this.state.selectionStart)) {
       // do not show suggestions when the input does not have the focus
       return null;
     }
 
-    let { className, style } = substyle(this.props, getModifiers(this.props, "suggestions"));
+    let { className, style } = substyle(
+      this.props,
+      getModifiers(this.props, "suggestions")
+    );
 
     return (
       <SuggestionsOverlay
-        className={ className }
+        className={className}
         style={{
           ...style,
-          ...this.state.suggestionsPosition
+          ...this.state.suggestionsPosition,
         }}
-        focusIndex={ this.state.focusIndex }
-        scrollFocusedIntoView={ this.state.scrollFocusedIntoView }
+        focusIndex={this.state.focusIndex}
+        scrollFocusedIntoView={this.state.scrollFocusedIntoView}
         ref="suggestions"
         suggestions={this.state.suggestions}
         onSelect={this.addMention}
         onMouseDown={this.handleSuggestionsMouseDown}
-        onMouseEnter={ (focusIndex) => this.setState({
-          focusIndex,
-          scrollFocusedIntoView: false
-        }) }
-        isLoading={this.isLoading()} />
+        onMouseEnter={(focusIndex) =>
+          this.setState({
+            focusIndex,
+            scrollFocusedIntoView: false,
+          })
+        }
+        isLoading={this.isLoading()}
+      />
     );
   },
 
-  renderHighlighter: function(inputStyle) {
+  renderHighlighter: function (inputStyle) {
     let { selectionStart, selectionEnd } = this.state;
     let { markup, displayTransform, singleLine, children, value } = this.props;
 
     return (
       <Highlighter
         ref="highlighter"
-        { ...substyle(this.props, getModifiers(this.props, "highlighter")) }
-        inputStyle={ inputStyle }
-        value={ value }
-        markup={ markup }
-        displayTransform={ displayTransform }
-        singleLine={ singleLine }
+        {...substyle(this.props, getModifiers(this.props, "highlighter"))}
+        inputStyle={inputStyle}
+        value={value}
+        markup={markup}
+        displayTransform={displayTransform}
+        singleLine={singleLine}
         selection={{
           start: selectionStart,
-          end: selectionEnd
+          end: selectionEnd,
         }}
-        onCaretPositionChange={ (position) => this.setState({ caretPosition: position }) }>
-
-        { children }
+        onCaretPositionChange={(position) =>
+          this.setState({ caretPosition: position })
+        }
+      >
+        {children}
       </Highlighter>
     );
   },
 
   // Returns the text to set as the value of the textarea with all markups removed
-  getPlainText: function() {
+  getPlainText: function () {
     return utils.getPlainText(
       this.props.value || "",
       this.props.markup,
@@ -228,38 +234,43 @@ const MentionsInput = React.createClass({
     );
   },
 
-  executeOnChange: function(event, ...args) {
-    if(this.props.onChange) {
+  executeOnChange: function (event, ...args) {
+    if (this.props.onChange) {
       return this.props.onChange(event, ...args);
     }
 
-    if(this.props.valueLink) {
+    if (this.props.valueLink) {
       return this.props.valueLink.requestChange(event.target.value, ...args);
     }
   },
 
   // Handle input element's change event
-  handleChange: function(ev) {
-
-    if(document.activeElement !== ev.target) {
+  handleChange: function (ev) {
+    if (document.activeElement !== ev.target) {
       // fix an IE bug (blur from empty input element with placeholder attribute trigger "input" event)
       return;
     }
 
-    var value = this.props.value || "";
+    var value = this.props.value || "";
     var newPlainTextValue = ev.target.value;
 
     // Derive the new value to set by applying the local change in the textarea's plain text
     var newValue = utils.applyChangeToValue(
-      value, this.props.markup,
+      value,
+      this.props.markup,
       newPlainTextValue,
-      this.state.selectionStart, this.state.selectionEnd,
+      this.state.selectionStart,
+      this.state.selectionEnd,
       ev.target.selectionEnd,
       this.props.displayTransform
     );
 
     // In case a mention is deleted, also adjust the new plain text value
-    newPlainTextValue = utils.getPlainText(newValue, this.props.markup, this.props.displayTransform);
+    newPlainTextValue = utils.getPlainText(
+      newValue,
+      this.props.markup,
+      this.props.displayTransform
+    );
 
     // Save current selection after change to be able to restore caret position after rerendering
     var selectionStart = ev.target.selectionStart;
@@ -268,9 +279,17 @@ const MentionsInput = React.createClass({
 
     // Adjust selection range in case a mention will be deleted by the characters outside of the
     // selection range that are automatically deleted
-    var startOfMention = utils.findStartOfMentionInPlainText(value, this.props.markup, selectionStart, this.props.displayTransform);
+    var startOfMention = utils.findStartOfMentionInPlainText(
+      value,
+      this.props.markup,
+      selectionStart,
+      this.props.displayTransform
+    );
 
-    if(startOfMention !== undefined && this.state.selectionEnd > startOfMention) {
+    if (
+      startOfMention !== undefined &&
+      this.state.selectionEnd > startOfMention
+    ) {
       // only if a deletion has taken place
       selectionStart = startOfMention;
       selectionEnd = selectionStart;
@@ -281,7 +300,7 @@ const MentionsInput = React.createClass({
       selectionStart: selectionStart,
       selectionEnd: selectionEnd,
       setSelectionAfterMentionChange: setSelectionAfterMentionChange,
-      focusIndex: 0
+      focusIndex: 0,
     });
 
     var mentions = utils.getMentions(newValue, this.props.markup);
@@ -294,19 +313,19 @@ const MentionsInput = React.createClass({
   },
 
   // Handle input element's select event
-  handleSelect: function(ev) {
+  handleSelect: function (ev) {
     // do nothing while a IME composition session is active
     if (isComposing) return;
 
     // keep track of selection range / caret position
     this.setState({
       selectionStart: ev.target.selectionStart,
-      selectionEnd: ev.target.selectionEnd
+      selectionEnd: ev.target.selectionEnd,
     });
 
     // refresh suggestions queries
     var el = this.refs.input;
-    if(ev.target.selectionStart === ev.target.selectionEnd) {
+    if (ev.target.selectionStart === ev.target.selectionEnd) {
       this.updateMentionsQueries(el.value, ev.target.selectionStart);
     } else {
       this.clearSuggestions();
@@ -318,22 +337,22 @@ const MentionsInput = React.createClass({
     this.props.onSelect(ev);
   },
 
-  handleKeyDown: function(ev) {
+  handleKeyDown: function (ev) {
     // do not intercept key events if the suggestions overlay is not shown
     var suggestionsCount = utils.countSuggestions(this.state.suggestions);
 
     var suggestionsComp = this.refs.suggestions;
-    if(suggestionsCount === 0 || !suggestionsComp) {
+    if (suggestionsCount === 0 || !suggestionsComp) {
       this.props.onKeyDown(ev);
 
       return;
     }
 
-    if(values(KEY).indexOf(ev.keyCode) >= 0) {
+    if (values(KEY).indexOf(ev.keyCode) >= 0) {
       ev.preventDefault();
     }
 
-    switch(ev.keyCode) {
+    switch (ev.keyCode) {
       case KEY.ESC: {
         this.clearSuggestions();
         return;
@@ -357,35 +376,39 @@ const MentionsInput = React.createClass({
     }
   },
 
-  shiftFocus: function(delta) {
+  shiftFocus: function (delta) {
     let suggestionsCount = utils.countSuggestions(this.state.suggestions);
 
     this.setState({
-      focusIndex: (suggestionsCount + this.state.focusIndex + delta) % suggestionsCount,
-      scrollFocusedIntoView: true
+      focusIndex:
+        (suggestionsCount + this.state.focusIndex + delta) % suggestionsCount,
+      scrollFocusedIntoView: true,
     });
   },
 
-  selectFocused: function() {
+  selectFocused: function () {
     let { suggestions, focusIndex } = this.state;
-    let { suggestion, descriptor } = utils.getSuggestion(suggestions, focusIndex);
+    let { suggestion, descriptor } = utils.getSuggestion(
+      suggestions,
+      focusIndex
+    );
 
     this.addMention(suggestion, descriptor);
 
     this.setState({
-      focusIndex: 0
+      focusIndex: 0,
     });
   },
 
-  handleBlur: function(ev) {
+  handleBlur: function (ev) {
     // only reset selection if the mousedown happened on an element
     // other than the suggestions overlay
-    if(!this._suggestionsMouseDown) {
+    if (!this._suggestionsMouseDown) {
       this.setState({
         selectionStart: null,
-        selectionEnd: null
+        selectionEnd: null,
       });
-    };
+    }
     this._suggestionsMouseDown = false;
 
     window.setTimeout(() => {
@@ -397,14 +420,14 @@ const MentionsInput = React.createClass({
     this.props.onBlur(ev, suggestionsShown);
   },
 
-  handleSuggestionsMouseDown: function(ev) {
+  handleSuggestionsMouseDown: function (ev) {
     this._suggestionsMouseDown = true;
   },
 
-  updateSuggestionsPosition: function() {
+  updateSuggestionsPosition: function () {
     let { caretPosition } = this.state;
 
-    if(!caretPosition || !this.refs.suggestions) {
+    if (!caretPosition || !this.refs.suggestions) {
       return;
     }
 
@@ -413,7 +436,7 @@ const MentionsInput = React.createClass({
     let suggestions = ReactDOM.findDOMNode(this.refs.suggestions);
     let highlighter = ReactDOM.findDOMNode(this.refs.highlighter);
 
-    if(!suggestions) {
+    if (!suggestions) {
       return;
     }
 
@@ -424,22 +447,22 @@ const MentionsInput = React.createClass({
     if (left + suggestions.offsetWidth > container.offsetWidth) {
       position.right = 0;
     } else {
-      position.left = left
+      position.left = left;
     }
 
     position.top = caretPosition.top - highlighter.scrollTop;
 
-    if(isEqual(position, this.state.suggestionsPosition)) {
+    if (isEqual(position, this.state.suggestionsPosition)) {
       return;
     }
 
     this.setState({
-      suggestionsPosition: position
+      suggestionsPosition: position,
     });
   },
 
-  updateHighlighterScroll: function() {
-    if(!this.refs.input || !this.refs.highlighter) {
+  updateHighlighterScroll: function () {
+    if (!this.refs.input || !this.refs.highlighter) {
       // since the invocation of this function is deferred,
       // the whole component may have been unmounted in the meanwhile
       return;
@@ -449,56 +472,67 @@ const MentionsInput = React.createClass({
     highlighter.scrollLeft = input.scrollLeft;
   },
 
-  handleCompositionStart: function() {
+  handleCompositionStart: function () {
     isComposing = true;
   },
 
-  handleCompositionEnd: function() {
+  handleCompositionEnd: function () {
     isComposing = false;
   },
 
-  componentDidMount: function() {
+  componentDidMount: function () {
     this.updateSuggestionsPosition();
   },
 
-  componentDidUpdate: function() {
+  componentDidUpdate: function () {
     this.updateSuggestionsPosition();
 
     // maintain selection in case a mention is added/removed causing
     // the cursor to jump to the end
     if (this.state.setSelectionAfterMentionChange) {
-      this.setState({setSelectionAfterMentionChange: false});
+      this.setState({ setSelectionAfterMentionChange: false });
       this.setSelection(this.state.selectionStart, this.state.selectionEnd);
     }
   },
 
-  setSelection: function(selectionStart, selectionEnd) {
-    if(selectionStart === null || selectionEnd === null) return;
+  setSelection: function (selectionStart, selectionEnd) {
+    if (selectionStart === null || selectionEnd === null) return;
 
     var el = this.refs.input;
-    if(el.setSelectionRange) {
+    if (el.setSelectionRange) {
       el.setSelectionRange(selectionStart, selectionEnd);
-    }
-    else if(el.createTextRange) {
+    } else if (el.createTextRange) {
       var range = el.createTextRange();
       range.collapse(true);
-      range.moveEnd('character', selectionEnd);
-      range.moveStart('character', selectionStart);
+      range.moveEnd("character", selectionEnd);
+      range.moveStart("character", selectionStart);
       range.select();
     }
   },
 
-  updateMentionsQueries: function(plainTextValue, caretPosition) {
+  updateMentionsQueries: function (plainTextValue, caretPosition) {
     // Invalidate previous queries. Async results for previous queries will be neglected.
     this._queryId++;
     this.setState({
-      suggestions: {}
+      suggestions: {},
     });
 
     // If caret is inside of or directly behind of mention, do not query
     var value = this.props.value || "";
-    if( utils.isInsideOfMention(value, this.props.markup, caretPosition, this.props.displayTransform) ||
-        utils.isInsideOfMention(value, this.props.markup, caretPosition-1, this.props.displayTransform) ) {
+    if (
+      utils.isInsideOfMention(
+        value,
+        this.props.markup,
+        caretPosition,
+        this.props.displayTransform
+      ) ||
+      utils.isInsideOfMention(
+        value,
+        this.props.markup,
+        caretPosition - 1,
+        this.props.displayTransform
+      )
+    ) {
       return;
     }
 
@@ -507,40 +541,79 @@ const MentionsInput = React.createClass({
     var substring = plainTextValue.substring(0, caretPosition);
 
     var that = this;
-    React.Children.forEach(this.props.children, function(child) {
-      if(!child) {
+    React.Children.forEach(this.props.children, function (child) {
+      if (!child) {
         return;
       }
 
       var regex = _getTriggerRegex(child.props.trigger);
       var match = substring.match(regex);
-      if(match) {
+      if (match) {
         var querySequenceStart = substring.indexOf(match[1], match.index);
-        that.queryData(match[2], child, querySequenceStart, querySequenceStart+match[1].length, plainTextValue);
+        that.queryData(
+          match[2],
+          child,
+          querySequenceStart,
+          querySequenceStart + match[1].length,
+          plainTextValue
+        );
       }
     });
   },
 
-  clearSuggestions: function() {
+  clearSuggestions: function () {
     // Invalidate previous queries. Async results for previous queries will be neglected.
     this._queryId++;
     this.setState({
       suggestions: {},
-      focusIndex: 0
+      focusIndex: 0,
     });
   },
 
-  queryData: function(query, mentionDescriptor, querySequenceStart, querySequenceEnd, plainTextValue) {
+  queryData: function (
+    query,
+    mentionDescriptor,
+    querySequenceStart,
+    querySequenceEnd,
+    plainTextValue
+  ) {
     var provideData = _getDataProvider(mentionDescriptor.props.data);
-    var snycResult = provideData(query, this.updateSuggestions.bind(null, this._queryId, mentionDescriptor, query, querySequenceStart, querySequenceEnd, plainTextValue));
-    if(snycResult instanceof Array) {
-      this.updateSuggestions(this._queryId, mentionDescriptor, query, querySequenceStart, querySequenceEnd, plainTextValue, snycResult);
+    var snycResult = provideData(
+      query,
+      this.updateSuggestions.bind(
+        null,
+        this._queryId,
+        mentionDescriptor,
+        query,
+        querySequenceStart,
+        querySequenceEnd,
+        plainTextValue
+      )
+    );
+    if (snycResult instanceof Array) {
+      this.updateSuggestions(
+        this._queryId,
+        mentionDescriptor,
+        query,
+        querySequenceStart,
+        querySequenceEnd,
+        plainTextValue,
+        snycResult
+      );
     }
   },
 
-  updateSuggestions: function(queryId, mentionDescriptor, query, querySequenceStart, querySequenceEnd, plainTextValue, suggestions) {
+  updateSuggestions: function (
+    queryId,
+    mentionDescriptor,
+    query,
+    querySequenceStart,
+    querySequenceEnd,
+    plainTextValue,
+    suggestions
+  ) {
     // neglect async results from previous queries
-    if(queryId !== this._queryId) return;
+    if (queryId !== this._queryId) return;
 
     var update = {};
     update[mentionDescriptor.props.type] = {
@@ -549,48 +622,71 @@ const MentionsInput = React.createClass({
       querySequenceStart: querySequenceStart,
       querySequenceEnd: querySequenceEnd,
       results: suggestions,
-      plainTextValue: plainTextValue
+      plainTextValue: plainTextValue,
     };
 
     this.setState({
-      suggestions: utils.extend({}, this.state.suggestions, update)
+      suggestions: utils.extend({}, this.state.suggestions, update),
     });
   },
 
-  addMention: function(suggestion, {mentionDescriptor, querySequenceStart, querySequenceEnd, plainTextValue}) {
+  addMention: function (
+    suggestion,
+    { mentionDescriptor, querySequenceStart, querySequenceEnd, plainTextValue }
+  ) {
     // Insert mention in the marked up value at the correct position
     var value = this.props.value || "";
-    var start = utils.mapPlainTextIndex(value, this.props.markup, querySequenceStart, 'START', this.props.displayTransform);
+    var start = utils.mapPlainTextIndex(
+      value,
+      this.props.markup,
+      querySequenceStart,
+      "START",
+      this.props.displayTransform
+    );
     var end = start + querySequenceEnd - querySequenceStart;
-    var insert = utils.makeMentionsMarkup(this.props.markup, suggestion.id, suggestion.display, mentionDescriptor.props.type);
+    var insert = utils.makeMentionsMarkup(
+      this.props.markup,
+      suggestion.id,
+      suggestion.display,
+      mentionDescriptor.props.type
+    );
     if (mentionDescriptor.props.appendSpaceOnAdd) {
-      insert = insert + ' '
+      insert = insert + " ";
     }
     var newValue = utils.spliceString(value, start, end, insert);
 
     // Refocus input and set caret position to end of mention
     this.refs.input.focus();
 
-    var displayValue = this.props.displayTransform(suggestion.id, suggestion.display, mentionDescriptor.props.type);
+    var displayValue = this.props.displayTransform(
+      suggestion.id,
+      suggestion.display,
+      mentionDescriptor.props.type
+    );
     if (mentionDescriptor.props.appendSpaceOnAdd) {
-      displayValue = displayValue + ' '
+      displayValue = displayValue + " ";
     }
     var newCaretPosition = querySequenceStart + displayValue.length;
     this.setState({
       selectionStart: newCaretPosition,
       selectionEnd: newCaretPosition,
-      setSelectionAfterMentionChange: true
+      setSelectionAfterMentionChange: true,
     });
 
     // Propagate change
-    var eventMock = { target: { value: newValue }};
+    var eventMock = { target: { value: newValue } };
     var mentions = utils.getMentions(newValue, this.props.markup);
-    var newPlainTextValue = utils.spliceString(plainTextValue, querySequenceStart, querySequenceEnd, displayValue);
+    var newPlainTextValue = utils.spliceString(
+      plainTextValue,
+      querySequenceStart,
+      querySequenceEnd,
+      displayValue
+    );
 
     this.executeOnChange(eventMock, newValue, newPlainTextValue, mentions);
 
     var onAdd = mentionDescriptor.props.onAdd;
-    if(onAdd) {
+    if (onAdd) {
       onAdd(suggestion.id, suggestion.display);
     }
 
@@ -598,29 +694,32 @@ const MentionsInput = React.createClass({
     this.clearSuggestions();
   },
 
-  isLoading: function() {
+  isLoading: function () {
     var isLoading = false;
-    React.Children.forEach(this.props.children, function(child) {
-      isLoading = isLoading || child && child.props.isLoading;
+    React.Children.forEach(this.props.children, function (child) {
+      isLoading = isLoading || (child && child.props.isLoading);
     });
     return isLoading;
   },
 
-  _queryId: 0
-
-
+  _queryId: 0,
 });
 
 export default Radium(MentionsInput);
 
 const getModifiers = (props, ...modifiers) => ({
-  ...modifiers.reduce((result, modifier) => ({ ...result, [modifier]: true }), {}),
+  ...modifiers.reduce(
+    (result, modifier) => ({ ...result, [modifier]: true }),
+    {}
+  ),
 
   "&singleLine": props.singleLine,
   "&multiLine": !props.singleLine,
 });
 
-const isMobileSafari = typeof navigator !== 'undefined' && /iPhone|iPad|iPod/i.test(navigator.userAgent);
+const isMobileSafari =
+  typeof navigator !== "undefined" &&
+  /iPhone|iPad|iPod/i.test(navigator.userAgent);
 
 const substyle = defaultStyle({
   style: {
@@ -640,7 +739,7 @@ const substyle = defaultStyle({
       width: "inherit",
     },
 
-    '&multiLine': {
+    "&multiLine": {
       input: {
         width: "100%",
         height: "100%",
@@ -649,11 +748,13 @@ const substyle = defaultStyle({
         resize: "none",
 
         // fix weird textarea padding in mobile Safari (see: http://stackoverflow.com/questions/6890149/remove-3-pixels-in-ios-webkit-textarea)
-        ...(isMobileSafari ? {
-          marginTop: 1,
-          marginLeft: -3,
-        } : null)
-      }
-    }
-  }
+        ...(isMobileSafari
+          ? {
+              marginTop: 1,
+              marginLeft: -3,
+            }
+          : null),
+      },
+    },
+  },
 });

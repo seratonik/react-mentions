@@ -1,14 +1,14 @@
-import React, { Component, PropTypes } from 'react';
-import Radium from './OptionalRadium';
-import defaultStyle from 'substyle';
+import React, { Component } from "react";
+import PropTypes from "prop-types";
+import Radium from "./OptionalRadium";
+import defaultStyle from "substyle";
 
-import utils from './utils';
+import utils from "./utils";
 
-import Suggestion from './Suggestion';
-import LoadingIndicator from './LoadingIndicator';
+import Suggestion from "./Suggestion";
+import LoadingIndicator from "./LoadingIndicator";
 
 class SuggestionsOverlay extends Component {
-
   static propTypes = {
     suggestions: PropTypes.object.isRequired,
     focusIndex: PropTypes.number,
@@ -23,96 +23,106 @@ class SuggestionsOverlay extends Component {
   };
 
   componentDidUpdate() {
-    const { suggestions } = this.refs
-    if (!suggestions || suggestions.offsetHeight >= suggestions.scrollHeight || !this.props.scrollFocusedIntoView) {
-      return
+    const { suggestions } = this.refs;
+    if (
+      !suggestions ||
+      suggestions.offsetHeight >= suggestions.scrollHeight ||
+      !this.props.scrollFocusedIntoView
+    ) {
+      return;
     }
 
-    const scrollTop = suggestions.scrollTop
-    let { top, bottom } = suggestions.children[this.props.focusIndex].getBoundingClientRect();
+    const scrollTop = suggestions.scrollTop;
+    let { top, bottom } = suggestions.children[
+      this.props.focusIndex
+    ].getBoundingClientRect();
     const { top: topContainer } = suggestions.getBoundingClientRect();
     top = top - topContainer + scrollTop;
     bottom = bottom - topContainer + scrollTop;
 
-    if(top < scrollTop) {
-      suggestions.scrollTop = top
-    } else if(bottom > suggestions.offsetHeight) {
-      suggestions.scrollTop = bottom - suggestions.offsetHeight
+    if (top < scrollTop) {
+      suggestions.scrollTop = top;
+    } else if (bottom > suggestions.offsetHeight) {
+      suggestions.scrollTop = bottom - suggestions.offsetHeight;
     }
   }
 
   render() {
     // do not show suggestions until there is some data
-    if(utils.countSuggestions(this.props.suggestions) === 0 && !this.props.isLoading) {
+    if (
+      utils.countSuggestions(this.props.suggestions) === 0 &&
+      !this.props.isLoading
+    ) {
       return null;
     }
 
     return (
-      <div
-        {...substyle(this.props)}
-        onMouseDown={this.props.onMouseDown}>
-
-        <ul ref="suggestions"
-          {...substyle(this.props, "list") }>
-          { this.renderSuggestions() }
+      <div {...substyle(this.props)} onMouseDown={this.props.onMouseDown}>
+        <ul ref="suggestions" {...substyle(this.props, "list")}>
+          {this.renderSuggestions()}
         </ul>
 
-        { this.renderLoadingIndicator() }
+        {this.renderLoadingIndicator()}
       </div>
     );
   }
 
   renderSuggestions() {
-    return utils.getSuggestions(this.props.suggestions).reduce((result, { suggestions, descriptor }) => [
-      ...result,
+    return utils
+      .getSuggestions(this.props.suggestions)
+      .reduce(
+        (result, { suggestions, descriptor }) => [
+          ...result,
 
-      ...suggestions.map((suggestion, index) => this.renderSuggestion(
-        suggestion,
-        descriptor,
-        result.length + index
-      ))
-    ], []);
+          ...suggestions.map((suggestion, index) =>
+            this.renderSuggestion(suggestion, descriptor, result.length + index)
+          ),
+        ],
+        []
+      );
   }
 
   renderSuggestion(suggestion, descriptor, index) {
     let id = this.getID(suggestion);
-    let isFocused = (index === this.props.focusIndex);
+    let isFocused = index === this.props.focusIndex;
 
     let { mentionDescriptor, query } = descriptor;
 
     return (
-      <Suggestion { ...substyle(this.props, "item") }
-        key={ id }
-        id={ id }
+      <Suggestion
+        {...substyle(this.props, "item")}
+        key={id}
+        id={id}
         ref={isFocused ? "focused" : null}
-        query={ query }
-        index={ index }
-        descriptor={ mentionDescriptor }
-        suggestion={ suggestion }
-        focused={ isFocused }
-        onClick={ () => this.select(suggestion, descriptor) }
-        onMouseEnter={ () => this.handleMouseEnter(index) } />
+        query={query}
+        index={index}
+        descriptor={mentionDescriptor}
+        suggestion={suggestion}
+        focused={isFocused}
+        onClick={() => this.select(suggestion, descriptor)}
+        onMouseEnter={() => this.handleMouseEnter(index)}
+      />
     );
   }
 
   getID(suggestion) {
-    if(suggestion instanceof String) {
+    if (suggestion instanceof String) {
       return suggestion;
     }
 
     return suggestion.id;
   }
 
-  renderLoadingIndicator () {
-    if(!this.props.isLoading) {
+  renderLoadingIndicator() {
+    if (!this.props.isLoading) {
       return;
     }
 
-    return <LoadingIndicator { ...substyle(this.props, "loadingIndicator") } />
+    return <LoadingIndicator {...substyle(this.props, "loadingIndicator")} />;
   }
 
   handleMouseEnter(index, ev) {
-    if(this.props.onMouseEnter) {
+    if (this.props.onMouseEnter) {
       this.props.onMouseEnter(index);
     }
   }
@@ -120,8 +130,7 @@ class SuggestionsOverlay extends Component {
   select(suggestion, descriptor) {
     this.props.onSelect(suggestion, descriptor);
   }
-
-};
+}
 
 export default Radium(SuggestionsOverlay);
 
@@ -137,6 +146,6 @@ const substyle = defaultStyle({
       margin: 0,
       padding: 0,
       listStyleType: "none",
-    }
-  }
+    },
+  },
 });

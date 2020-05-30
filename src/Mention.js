@@ -1,18 +1,14 @@
-import React, { PropTypes } from 'react';
-import Radium from './OptionalRadium';
-
-import utils from './utils';
+import React from "react";
+import PropTypes from "prop-types";
+import Radium from "./OptionalRadium";
 
 function Mention({ display, className, style }) {
   return (
-    <strong
-      className={className}
-      style={{ ...defaultStyle, ...style}}
-    >
-      { display }
+    <strong className={className} style={{ ...defaultStyle, ...style }}>
+      {display}
     </strong>
   );
-};
+}
 
 Mention.propTypes = {
   /**
@@ -33,12 +29,12 @@ Mention.propTypes = {
 
   trigger: PropTypes.oneOfType([
     PropTypes.string,
-    PropTypes.instanceOf(RegExp)
+    PropTypes.instanceOf(RegExp),
   ]),
 
   isLoading: PropTypes.bool,
   className: PropTypes.string,
-  style: PropTypes.object
+  style: PropTypes.object,
 };
 
 Mention.defaultProps = {
@@ -48,11 +44,11 @@ Mention.defaultProps = {
   onRemove: () => null,
   renderSuggestion: null,
   isLoading: false,
-  appendSpaceOnAdd: false
+  appendSpaceOnAdd: false,
 };
 
 const defaultStyle = {
-  fontWeight: "inherit"
-}
+  fontWeight: "inherit",
+};
 
 export default Radium(Mention);
